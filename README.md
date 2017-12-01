@@ -21,7 +21,7 @@ Given an image of a food dish, algorithm will identify an estimate of the dish n
 		cd food_nutrition_classifier
 	```
 2. Download the meta-data and image database and place those in the repo, at location `path/to/food_nutrition_classifier/`.
-3. Obtain the necessary Python packages, and switch Keras backend to Tensorflow.  
+3. Install [Miniconda](https://conda.io/miniconda.html) and obtain the necessary Python packages, and switch Keras backend to Tensorflow as shown below.  
 
 	For __Mac/OSX__:
 	```
