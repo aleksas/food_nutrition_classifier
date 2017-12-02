@@ -8,6 +8,7 @@ class SQLiteDataLoader:
 		self.image_database_path = image_db_path
 		self.index_cache = None
 		self.count_cache = {}
+		self.nutrition_cache = []
 
 	def get_condition_indeces(self, classification_id):
 		if self.index_cache == None:
@@ -24,6 +25,20 @@ class SQLiteDataLoader:
 			self.index_cache = range(max_c)
 
 		return self.index_cache
+
+	def get_nutrition_values(self, classification_id):
+		if len(self.nutrition_cache) == 0:
+			q = 'SELECT protein_rate, fat_rate, carbohydrate_rate, class FROM nutrition_rates, recipe_classes WHERE nutrition_rates.recipe_id = recipe_classes.recipe_id AND recipe_classes.classification_id = ?'
+
+			params = (classification_id,)
+			connection = sqlite3.connect(self.database_path)
+
+			cursor = connection.cursor()
+			self.nutrition_cache = cursor.execute(q, params).fetchall()
+
+			connection.close()
+
+		return self.nutrition_cache
 
 	def get_image_count_by_condition_index(self, ci, classification_id, multiplier, max):
 		if ci not in self.count_cache and ci is not None:
