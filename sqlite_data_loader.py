@@ -6,12 +6,12 @@ class SQLiteDataLoader:
 	def __init__(self, db_path='data.sqlite', image_db_path='image_data_299.sqlite'):
 		self.database_path = db_path
 		self.image_database_path = image_db_path
-		self.index_cache = None
+		self.index_cache = {}
 		self.count_cache = {}
-		self.nutrition_cache = []
+		self.nutrition_cache = {}
 
 	def get_condition_indeces(self, classification_id):
-		if self.index_cache == None:
+		if not classification_id in self.index_cache:
 			q = 'SELECT MAX(class)+1 FROM recipe_classes WHERE classification_id=?'
 
 			connection = sqlite3.connect(self.database_path)
@@ -22,41 +22,76 @@ class SQLiteDataLoader:
 			max_c = cursor.execute(q, params).fetchone()[0]
 
 			connection.close()
-			self.index_cache = range(max_c)
+			self.index_cache[classification_id] = range(max_c)
 
-		return self.index_cache
+		return self.index_cache[classification_id]
+
+	def fix_class_sequence(self, classification_id):
+		q = 'SELECT class FROM recipe_classes WHERE classification_id=? GROUP BY class'
+
+		connection = sqlite3.connect(self.database_path)
+
+		cursor = connection.cursor()
+		params = (classification_id,)
+
+		initial_classes = cursor.execute(q, params).fetchall()
+		initial_classes.sort()
+
+		for  i in range(len(initial_classes)):
+			s1 = 'update recipe_classes set class=%d WHERE classification_id=%d and class=%d;' % (i, classification_id, initial_classes[i][0])
+			s2 = 'update centroids set id=%d WHERE classification_id=%d and id=%d;' % (i, classification_id, initial_classes[i][0])
+			print (s1)
+			print (s2)
+
+		connection.close()
 
 	def get_nutrition_values(self, classification_id):
-		if len(self.nutrition_cache) == 0:
+		if not classification_id in self.nutrition_cache:
 			q = 'SELECT protein_rate, fat_rate, carbohydrate_rate, class FROM nutrition_rates, recipe_classes WHERE nutrition_rates.recipe_id = recipe_classes.recipe_id AND recipe_classes.classification_id = ?'
 
 			params = (classification_id,)
 			connection = sqlite3.connect(self.database_path)
 
 			cursor = connection.cursor()
-			self.nutrition_cache = cursor.execute(q, params).fetchall()
+			self.nutrition_cache[classification_id] = cursor.execute(q, params).fetchall()
 
 			connection.close()
 
-		return self.nutrition_cache
+		return self.nutrition_cache[classification_id]
 
 	def get_image_count_by_condition_index(self, ci, classification_id, multiplier, max):
-		if ci not in self.count_cache and ci is not None:
+		if not classification_id in self.count_cache:
+			self.count_cache[classification_id] = {}
+
+		if ci not in self.count_cache[classification_id] and ci is not None:
 			q = 'WITH Tmp AS (SELECT recipe_id FROM recipe_classes WHERE classification_id=? AND class=?) SELECT COUNT(*) FROM images, Tmp WHERE images.recipe_id = Tmp.recipe_id'
 
 			connection = sqlite3.connect(self.database_path)
 
 			cursor = connection.cursor()
 			params = (classification_id, ci)
-			self.count_cache[ci] = cursor.execute(q, params).fetchone()[0]
+			self.count_cache[classification_id][ci] = cursor.execute(q, params).fetchone()[0]
 
-			print ("Class %d has %d images." % (ci, self.count_cache[ci]))
+			print ("Class %d has %d images." % (ci, self.count_cache[classification_id][ci]))
 
 			connection.close()
 
-		count = self.count_cache[ci]
+		count = self.count_cache[classification_id][ci]
 
 		return min(int(count * multiplier), max)
+
+	def get_centroids(self, classification_id):
+		q = 'SELECT protein, fat, carbohydrate, id FROM centroids WHERE classification_id=?'
+
+		params = (classification_id,)
+		connection = sqlite3.connect(self.database_path)
+
+		cursor = connection.cursor()
+		res = list(cursor.execute(q, params).fetchall())
+
+		connection.close()
+
+		return res
 
 	def get_image_ids_by_condition_index(self, ci, classification_id, offset, count):
 		q = 'WITH Tmp AS (SELECT recipe_id FROM recipe_classes WHERE classification_id=? AND class=?) SELECT images.id FROM images, Tmp WHERE images.recipe_id=Tmp.recipe_id LIMIT ?, ?'
