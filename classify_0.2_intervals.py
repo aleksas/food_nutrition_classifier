@@ -3,8 +3,8 @@ import io
 import numpy as np
 from sqlite_data_loader import SQLiteDataLoader
 
-database_path = '../recipes/data.sqlite'
-image_data_database_path = '../recipes/image_data_299.sqlite'
+database_path = 'data.sqlite'
+image_data_database_path = 'image_data_299.sqlite'
 sdl = SQLiteDataLoader(database_path, image_data_database_path)
 
 classification_id = 11
@@ -83,16 +83,3 @@ for centroid in centroids:
     print (query)
 
 sdl.fix_class_sequence(classification_id)
-
-def get_condition_indeces(classification_id):
-	q = 'SELECT MAX(class)+1 FROM recipe_classes WHERE classification_id=?'
-
-	connection = sqlite3.connect(self.database_path)
-
-	cursor = connection.cursor()
-	params = (classification_id,)
-
-	max_c = cursor.execute(q, params).fetchone()[0]
-
-	connection.close()
-	self.index_cache[classification_id] = range(max_c)
