@@ -59,7 +59,7 @@ class SQLiteDataLoader:
 
 		return self.nutrition_cache[classification_id]
 
-	def get_image_count_by_condition_index(self, ci, classification_id, multiplier, max):
+	def get_image_count_by_condition_index(self, ci, classification_id, factor, max):
 		if not classification_id in self.count_cache:
 			self.count_cache[classification_id] = {}
 
@@ -78,7 +78,7 @@ class SQLiteDataLoader:
 
 		count = self.count_cache[classification_id][ci]
 
-		return min(int(count * multiplier), max)
+		return min(int(count * factor), int(max * factor))
 
 	def get_centroids(self, classification_id):
 		q = 'SELECT protein, fat, carbohydrate, id FROM centroids WHERE classification_id=?'
