@@ -15,7 +15,7 @@ col_yellow = (255,255,0,255)
 col_green = (0,255,0,255)
 line_width = 1
 
-classification_id = 9
+classification_id = 11
 
 rows = 4
 images_per_row = 40
