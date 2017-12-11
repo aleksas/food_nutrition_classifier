@@ -10,7 +10,7 @@ class SQLiteDataLoader:
 		self.count_cache = {}
 		self.nutrition_cache = {}
 
-	def get_condition_indeces(self, classification_id):
+	def get_classes(self, classification_id):
 		if not classification_id in self.index_cache:
 			q = 'SELECT MAX(class)+1 FROM recipe_classes WHERE classification_id=?'
 
@@ -59,7 +59,7 @@ class SQLiteDataLoader:
 
 		return self.nutrition_cache[classification_id]
 
-	def get_image_count_by_condition_index(self, ci, classification_id, factor, max):
+	def get_image_count_by_class(self, ci, classification_id, factor, max):
 		if not classification_id in self.count_cache:
 			self.count_cache[classification_id] = {}
 
@@ -93,7 +93,7 @@ class SQLiteDataLoader:
 
 		return res
 
-	def get_image_ids_by_condition_index(self, ci, classification_id, offset, count):
+	def get_image_ids_by_class(self, ci, classification_id, offset, count):
 		q = 'WITH Tmp AS (SELECT recipe_id FROM recipe_classes WHERE classification_id=? AND class=?) SELECT images.id FROM images, Tmp WHERE images.recipe_id=Tmp.recipe_id LIMIT ?, ?'
 
 		image_ids = []
