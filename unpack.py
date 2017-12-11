@@ -6,7 +6,7 @@ from sqlite_data_loader import SQLiteDataLoader
 sdl = SQLiteDataLoader('data.sqlite', 'image_data_299.sqlite')
 
 classification_id = 11
-max_c = 450
+max_c = 520
 
 dst_directory = 'food_images/cid%d_max%d' % (classification_id, max_c)
 
