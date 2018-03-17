@@ -8,7 +8,7 @@ random.seed(1)
 sdl = SQLiteDataLoader('data.sqlite', 'image_data_299.sqlite')
 
 classification_id = 11
-max_c = 520
+max_c = 2024
 
 dst_directory = 'food_images/cid%d_max%d' % (classification_id, max_c)
 
@@ -21,10 +21,11 @@ train_p = 0.8
 test_p = 0.1
 valid_p = 0.1
 
-split_db = True#False
+split_db = False#True
 
 for ci in sdl.get_classes(classification_id):
-    image_ids = random.sample(sdl.get_image_ids_by_class(ci, classification_id, 0, 100000), max_c)
+    ci_ids = sdl.get_image_ids_by_class(ci, classification_id, 0, 100000)
+    image_ids = random.sample(ci_ids, min(max_c, len(ci_ids)))
 
     dst_image_dir = ''
 

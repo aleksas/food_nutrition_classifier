@@ -9,6 +9,7 @@ class SQLiteDataLoader:
 		self.index_cache = {}
 		self.count_cache = {}
 		self.nutrition_cache = {}
+		self.range_count_cache = {}
 
 	def get_classes(self, classification_id):
 		if not classification_id in self.index_cache:
@@ -27,7 +28,7 @@ class SQLiteDataLoader:
 		return self.index_cache[classification_id]
 
 	def fix_class_sequence(self, classification_id):
-		q = 'SELECT class FROM recipe_classes WHERE classification_id=? GROUP BY class'
+		q = 'SELECT class FROM recipe_classes WHERE classification_id=? GROUP BY class ORDER BY class ASC'
 
 		connection = sqlite3.connect(self.database_path)
 
@@ -35,7 +36,6 @@ class SQLiteDataLoader:
 		params = (classification_id,)
 
 		initial_classes = cursor.execute(q, params).fetchall()
-		initial_classes.sort()
 
 		for  i in range(len(initial_classes)):
 			s1 = 'update recipe_classes set class=%d WHERE classification_id=%d and class=%d;' % (i, classification_id, initial_classes[i][0])
@@ -79,6 +79,35 @@ class SQLiteDataLoader:
 		count = self.count_cache[classification_id][ci]
 
 		return min(int(count * factor), int(max * factor))
+
+	def get_image_count_by_ranges(self, ci, classification_id, ranges):
+		if not classification_id in self.range_count_cache:
+			self.range_count_cache[classification_id] = {}
+
+		if not classification_id in self.range_count_cache[ci]:
+			q = 'SELECT count(*) FROM nutrition_rates WHERE protein_rate >= ? AND protein_rate <= ? AND fat_rate >= ? AND fat_rate <= ? AND carbohydrate_rate >= ? AND carbohydrate_rate <= ?'
+
+			params = (ranges[0][0],ranges[0][1],ranges[1][0],ranges[1][1],ranges[2][0],ranges[2][1])
+			connection = sqlite3.connect(self.database_path)
+
+			cursor = connection.cursor()
+			self.range_count_cache[classification_id][ci] = cursor.execute(q, params).fetchall()
+
+			connection.close()
+
+		return self.range_count_cache[classification_id][ci]
+
+	def get_image_count_by_condition(self, table, condition):
+		q = 'SELECT count(*) FROM %s %s;' % (table, condition)
+
+		connection = sqlite3.connect(self.database_path)
+
+		cursor = connection.cursor()
+		count = cursor.execute(q).fetchone()[0]
+
+		connection.close()
+
+		return count
 
 	def get_centroids(self, classification_id):
 		q = 'SELECT protein, fat, carbohydrate, id FROM centroids WHERE classification_id=?'
